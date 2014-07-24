@@ -18,7 +18,7 @@ if (require("pepDat")) {
   data(pep_hxb2)
   psSet <- summarizePeptides(pSet, summary = "mean", position = pep_hxb2)
 
-  ## Normalize the peptide set
+  ## Normalize the peptide sets
   pnSet <- normalizeArray(psSet)
 
   ## Smooth

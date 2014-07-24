@@ -51,8 +51,10 @@ slidingMean <-function(peptideSet, width=9, verbose=FALSE, split.by.clade=TRUE){
   }
 
   if(split.by.clade & ncol(clade(peptideSet)) > 1){
+    if(verbose) cat("Spliting by clades.\n")
     pSet_list <- split(peptideSet, clade(peptideSet))
-    #peptides need to be ordered the same in exprs and featureRange
+    #peptides need to be ordered the same in exprs and featureRange   
+    
     for(i in 1:length(pSet_list)){
       cur_clade <- colnames(clade(peptideSet))[i]
       ranges(pSet_list[[i]])$clade <- cur_clade
@@ -71,6 +73,7 @@ slidingMean <-function(peptideSet, width=9, verbose=FALSE, split.by.clade=TRUE){
 #     if (length(names(ranges(peptideSet))) > 1)
 #       warning("smoothing multiple spaces together in peptideSet object")
 #     # This could be made more efficient with multicore
+    if(verbose) cat("Not splitting by clades.")
     p <- position(peptideSet)
     o <- order(p)
     ro <- order(o)

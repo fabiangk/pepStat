@@ -80,7 +80,7 @@
 #' @importFrom GenomicRanges GRanges
 #'
 makePeptideSet<-function(files=NULL, path=NULL, mapping.file=NULL, use.flags=FALSE,
-                         rm.control.list=NULL, empty.control.list=NULL,
+                         rm.control.list=NULL, empty.control.list=NULL, columns=list(R="F635 Median",Rb="B635 Median"),
                          bgCorrect.method="normexp", log=TRUE, check.row.order=FALSE,
                          verbose=FALSE){
   # There is some ambiguity with respect to what is Name and ID
@@ -88,6 +88,9 @@ makePeptideSet<-function(files=NULL, path=NULL, mapping.file=NULL, use.flags=FAL
   # Name -> annotation
   f <- function(x) as.numeric(x$Flags > -99)
 
+  #Giving the user a feedback which column is used for Rf/Rb channels
+  if(verbose) cat("Using",columns$R,"as red foreground and",columns$Rb,"as red background.\n")
+  
   # before reading in files, check whether mapping.file is accessible,
   # to save user time in case they made a mistake.
   if (!is.null(mapping.file)){
@@ -98,12 +101,12 @@ makePeptideSet<-function(files=NULL, path=NULL, mapping.file=NULL, use.flags=FAL
   if (!check.row.order) { # Assume that the design is the same and don't check rows, order, etc.
     RG <- read.maimages(files=files,
                         source="genepix", path=path, ext="gpr",
-                        columns=list(R="F635 Median",Rb="B635 Median"),
+                        columns=columns,
                         wt.fun=f,verbose=verbose)
   } else { # Used if the arrays don't exactly contain the same feature (e.g. the design has changed)
     files <- grep("gpr",list.files(path),value=TRUE)
     RG.list <- lapply(files, read.maimages, source="genepix",
-                      path=path, columns=list(R="F635 Median",Rb="B635 Median"),
+                      path=path, columns=columns,
                       wt.fun=f, verbose=verbose)
     if(verbose){
       cat("Reordering all peptides\n")
