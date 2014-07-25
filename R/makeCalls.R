@@ -44,7 +44,7 @@
 #' @author Greg Imholte
 #' @export
 #' @example examples/pipeline.R
-makeCalls <- function(peptideSet, cutoff=1.2, method="absolute", freq=TRUE, group=NULL, verbose=FALSE){
+makeCalls <- function(peptideSet, cutoff=1.2, method="absolute", splitVar=c(pre="pre",post="post") ,freq=TRUE, group=NULL, verbose=FALSE){
 	if (class(peptideSet)!="peptideSet") {
 		stop("peptideSet must be an object of class peptideSet")
 	}
@@ -56,8 +56,11 @@ makeCalls <- function(peptideSet, cutoff=1.2, method="absolute", freq=TRUE, grou
 	if (preproc(peptideSet@experimentData)$normalization=="none") {
 		warning("You should probably normalize your data before using this function.")
 	}
+  
+  post=splitVar[["post"]]
+  pre=splitVar[["pre"]]
 
-	I <- baselineCorrect.pSet(peptideSet, verbose=verbose)
+	I <- baselineCorrect.pSet(peptideSet, pre=pre, post=post,verbose=verbose)
 
 	if (method == "FDR") {
 		Calls<-.findFDR(I, cutoff, position(peptideSet), verbose=verbose)
@@ -69,7 +72,7 @@ makeCalls <- function(peptideSet, cutoff=1.2, method="absolute", freq=TRUE, grou
 		#parse the grouping variable
 
 		# Only select the Post and remove empty levels
-		t1 <- grepl("post", tolower(pData(peptideSet)$visit))
+		t1 <- grepl(post, tolower(pData(peptideSet)$visit))
 		pd <- pData(peptideSet)[t1, ]
 
     if(!group%in%colnames(pd)){
@@ -136,23 +139,23 @@ makeCalls <- function(peptideSet, cutoff=1.2, method="absolute", freq=TRUE, grou
 #'
 #' @author Raphael Gottardo, Gregory Imholte
 #'
-baselineCorrect.pSet <- function(pSet, verbose=FALSE){
+baselineCorrect.pSet <- function(pSet, pre, post,verbose=FALSE){
   y <- exprs(pSet)
   ptid <- pData(pSet)$ptid
-  t0 <- grep("pre", tolower(pData(pSet)$visit))
-  t1 <- grep("post", tolower(pData(pSet)$visit))
+  t0 <- grep(pre, tolower(pData(pSet)$visit))
+  t1 <- grep(post, tolower(pData(pSet)$visit))
   ### Paired?
   if (length(ptid[t0])==0||length(ptid[t1])==0) {
     I<-as.matrix(y[,t1])
   } else {
     if (isTRUE(all.equal(sort(ptid[t0]), sort(ptid[t1])))) {
       if (verbose) {
-        message("You have paired PRE/POST samples\n")
+        message("You have paired ",pre,"/",post," samples\n")
       }
       I <- as.matrix(y[,t1])-as.matrix(y[,t0])
     } else {
       if(verbose) {
-        message("You don't have paired PRE/POST samples\n")
+        message("You don't have paired",pre,"/",post,"samples\n")
       }
       I <- as.matrix(y[,t1])-rowMeans(y[, t0, drop=FALSE], na.rm=TRUE)#the vector to be subtracted from matrix need to be the same length as nrow of the matrix
     }
@@ -183,29 +186,29 @@ baselineCorrect.pSet <- function(pSet, verbose=FALSE){
 #' Subjects with baseline only will not be represented in the resulting matrix.
 #'
 #' @author Renan Sauteraud
-baseline_correct <- function(pSet, verbose=FALSE){
+baseline_correct <- function(pSet, pre, post, verbose=FALSE){
   exprs <- exprs(pSet)
   pd <- pData(pSet)
-  t0 <- grep("pre", tolower(pd$visit))
-  t1 <- grep("post", tolower(pd$visit))
+  t0 <- grep(pre, tolower(pd$visit))
+  t1 <- grep(post, tolower(pd$visit))
   ## All paired
   if (isTRUE(all.equal(sort(pd$ptid[t0]), sort(pd$ptid[t1])))){
     if (verbose) {
-      message("You have paired PRE/POST samples\n")
+      message("You have paired ",pre,"/",post," samples\n")
     }
     I <- as.matrix(exprs[,t1])-as.matrix(exprs[,t0])
   } else {
     ## Deal with paired samples first
     paired <- pd$ptid[t1][pd$ptid[t1] %in% pd$ptid[t0]]
-    pre_paired <- rownames(pd[ pd$ptid %in% paired & tolower(pd$visit)=="pre",])
-    post_paired <- rownames(pd[ pd$ptid %in% paired & tolower(pd$visit)=="post",])
+    pre_paired <- rownames(pd[ pd$ptid %in% paired & tolower(pd$visit)==pre,])
+    post_paired <- rownames(pd[ pd$ptid %in% paired & tolower(pd$visit)==post,])
     I <- exprs[, post_paired] - exprs[, pre_paired]
     colnames(I) <- paired
     ## Cbind the rest
     if (verbose) {
       cat(length(non_paired), "subjects don't have a baseline sample.\n")
     }
-    non_paired <- unique(pd$ptid[!( pd$ptid %in% paired) & tolower(pd$visit)=="post"])
+    non_paired <- unique(pd$ptid[!( pd$ptid %in% paired) & tolower(pd$visit)==post])
     if(length(non_paired) > 0){
       post_only <- rownames(pd[ pd$ptid %in% non_paired, ])
       I_no_pairs <- exprs[, post_only] - rowMeans(exprs[, t0, drop=FALSE], na.rm=TRUE)

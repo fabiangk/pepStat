@@ -89,7 +89,11 @@ makePeptideSet<-function(files=NULL, path=NULL, mapping.file=NULL, use.flags=FAL
   f <- function(x) as.numeric(x$Flags > -99)
 
   #Giving the user a feedback which column is used for Rf/Rb channels
-  if(verbose) cat("Using",columns$R,"as red foreground and",columns$Rb,"as red background.\n")
+  if(verbose) {
+    cat("Using",columns$R,"as red foreground and",columns$Rb,"as red background.\n")
+    cat("Using",rm.control.list,"as controls\n")
+    cat("Using",empty.control.list,"as empty\n")    
+  } 
   
   # before reading in files, check whether mapping.file is accessible,
   # to save user time in case they made a mistake.

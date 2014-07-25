@@ -33,7 +33,7 @@
 #' @importFrom GenomicRanges seqnames
 #' @export
 #' @example examples/pipeline.R
-summarizePeptides <- function(peptideSet, summary="median", position=NULL){
+summarizePeptides <- function(peptideSet, summary="median", position=NULL,verbose=FALSE){
 	# Check arguments for conformity
 	check = .checkArgs_sumPeps(peptideSet, summary, position)
 	if(!check){
@@ -95,12 +95,11 @@ summarizePeptides <- function(peptideSet, summary="median", position=NULL){
 		# reorder peptideSet so that rows of expression matrix
 		# match the ordering in the GRanges object
 		ind1 <- match(names(position), peptide(newSet))
-		newSet <- newSet[ind1,]
-
+		newSet <- newSet[ind1,]   
     ranges(ranges(newSet)) <- ranges(position)
-    values(newSet) <- cbind(values(newSet), values(position))
+    values(newSet) <- cbind(values(newSet), values(position))#
 	}
-	pData(newSet) <- pData(peptideSet)
+  pData(newSet) <- pData(peptideSet)
 	preproc(newSet)$summary <- summary
 	newSet
 }
